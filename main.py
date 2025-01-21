@@ -34,7 +34,7 @@ def main(args: list[str]) -> int:
         try: result = requests.head(url)
         except: continue
         completion_percentage = (float(i + 1 - start_document) / float((end_document + 1) - start_document)) * 100.0
-        print(f"[{completion_percentage :.2f}%] Checking remote document: {url} -> Code: {result.status_code}", end="\r")
+        print(f"[{completion_percentage :.2f}%] Checking remote document: {url} -> Code: {result.status_code}")
 
         if result.status_code == 200:
             missing_documents = 0
@@ -64,13 +64,13 @@ def main(args: list[str]) -> int:
         download_size += int(document.headers["content-length"])
         completion_percentage = (float(download_size) / float(total_size_b)) * 100.0
 
-        temp_document_file = tempfile.TemporaryFile('wb+')
-        temp_document_file.write(document.content)
+        #temp_document_file = tempfile.TemporaryFile('wb+')
+        #temp_document_file.write(document.content)
 
-        pdf = pypdf.PdfReader(temp_document_file)
-        document_digested_title = re.search(r"Drucksache\s[0-9]+/[0-9]+", pdf.metadata.title).group(0)
+        #pdf = pypdf.PdfReader(temp_document_file)
+        document_digested_title = "Drucksache_" + document_url[-11:-9] + document_url[-9:-4]
         document_filename = document_digested_title.replace("/", "-").replace(" ", "_") + ".pdf"
-        temp_document_file.close()
+        #temp_document_file.close()
 
         document_updated = True
         hash_newfile = hashlib.sha256(document.content).hexdigest()
@@ -89,10 +89,10 @@ def main(args: list[str]) -> int:
                 document_file.write(document.content)
                 document_file.close()
 
-            print(f"[{completion_percentage :.2f}%] Downloaded document: {document_digested_title}", end="\r")
+            print(f"[{completion_percentage :.2f}%] Downloaded document: {document_digested_title}")
         else:
             skipped_documents += 1
-            print(f"[{completion_percentage :.2f}%] Skipped document: {document_digested_title}", end="\r")
+            print(f"[{completion_percentage :.2f}%] Skipped document: {document_digested_title}")
 
     print(f"\nProgram finished in {time.time() - start_time :.1f} seconds.")
     print(f"{new_documents} Documents new; {updated_documents} Documents updated; {skipped_documents} Documents skipped")
