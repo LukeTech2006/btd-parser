@@ -21,7 +21,7 @@ def main(args: list[str]) -> int:
     total_size_b = 0
 
     #calculate hashes of existing documents
-    print(f"[{time.strftime("%F %T")}] Generating hash-lookup...", end="")
+    print(f"[{time.strftime('%F %T')}] Generating hash-lookup...", end="")
     for existant_document in existant_documents:
         with open(f"btd/{existant_document}", "rb") as existant_document_handle:
             existant_document_hash = hashlib.sha256(existant_document_handle.read(), usedforsecurity=False)
@@ -35,7 +35,7 @@ def main(args: list[str]) -> int:
         try: result = requests.head(url)
         except: continue
         completion_percentage = (float(i + 1 - start_document) / float((end_document + 1) - start_document)) * 100.0
-        print(f"[{time.strftime("%F %T")}] {completion_percentage :.2f}% - Checking remote document: {url} -> Code: {result.status_code}")
+        print(f"[{time.strftime('%F %T')}] {completion_percentage :.2f}% - Checking remote document: {url} -> Code: {result.status_code}")
 
         if result.status_code == 200:
             missing_documents = 0
@@ -47,9 +47,9 @@ def main(args: list[str]) -> int:
 
     #calculate size
     if total_size_b / (1024 ** 2) < 1024: 
-        print(f"[{time.strftime("%F %T")}] Calculated size of download: {float(total_size_b) / (1024.0 ** 2) :.2f} MiB")
+        print(f"[{time.strftime('%F %T')}] Calculated size of download: {float(total_size_b) / (1024.0 ** 2) :.2f} MiB")
     else:
-        print(f"[{time.strftime("%F %T")}] Calculated size of download: {float(total_size_b) / (1024.0 ** 3) :.2f} GiB")
+        print(f"[{time.strftime('%F %T')}] Calculated size of download: {float(total_size_b) / (1024.0 ** 3) :.2f} GiB")
 
     #download documents
     try: os.mkdir("btd")
@@ -85,13 +85,13 @@ def main(args: list[str]) -> int:
                 document_file.write(document.content)
                 document_file.close()
 
-            print(f"[{time.strftime("%F %T")}] {completion_percentage :.2f}% - Downloaded document: {document_digested_title}")
+            print(f"[{time.strftime('%F %T')}] {completion_percentage :.2f}% - Downloaded document: {document_digested_title}")
         else:
             skipped_documents += 1
-            print(f"[{time.strftime("%F %T")}] {completion_percentage :.2f}% - Skipped document: {document_digested_title}")
+            print(f"[{time.strftime('%F %T')}] {completion_percentage :.2f}% - Skipped document: {document_digested_title}")
 
-    print(f"[{time.strftime("%F %T")}] Program finished in {time.time() - start_time :.1f} seconds.")
-    print(f"[{time.strftime("%F %T")}] {new_documents} Document(s) new; {updated_documents} Document(s) updated; {skipped_documents} Document(s) skipped")
+    print(f"[{time.strftime('%F %T')}] Program finished in {time.time() - start_time :.1f} seconds.")
+    print(f"[{time.strftime('%F %T')}] {new_documents} Document(s) new; {updated_documents} Document(s) updated; {skipped_documents} Document(s) skipped")
     return 0
 
 if __name__ == "__main__":
