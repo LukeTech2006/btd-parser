@@ -33,7 +33,7 @@ def main(args: list[str]) -> int:
         json.dump(documents_metadata, metadata_handle, indent=4)
         metadata_handle.close()
 
-    print(f"[{time.strftime('%F %T')}] Program finished in {time.time() - start_time} seconds.")
+    print(f"[{time.strftime('%F %T')}] Program finished in {time.time() - start_time :.1f} seconds.")
     return 0
 
 if __name__ == "__main__":
