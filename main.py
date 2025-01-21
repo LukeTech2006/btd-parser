@@ -68,7 +68,7 @@ def main(args: list[str]) -> int:
         #temp_document_file.write(document.content)
 
         #pdf = pypdf.PdfReader(temp_document_file)
-        document_digested_title = "Drucksache_" + document_url[-11:-9] + document_url[-9:-4]
+        document_digested_title = "Drucksache_" + document_url[-11:-9] + "-" + document_url[-9:-4]
         document_filename = document_digested_title.replace("/", "-").replace(" ", "_") + ".pdf"
         #temp_document_file.close()
 
