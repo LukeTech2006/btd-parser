@@ -13,6 +13,7 @@ def main(args: list[str]) -> int:
     for file in os.listdir("btd"):
         if not str.endswith(file,".pdf"): continue
         existant_documents.append(file)
+    existant_documents.sort()
     total_document_count = len(existant_documents)
 
     print(f"[{time.strftime('%F %T')}] Working through input directory...")
