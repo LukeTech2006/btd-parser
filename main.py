@@ -28,16 +28,21 @@ def main(args: list[str]) -> int:
     print("Done.")
 
     #check documents for existance on remote location
+    missing_documents = 0
     for i in range(start_document, end_document + 1):
         url = getDocumentUrl(i)
         try: result = requests.head(url)
-        except requests.exceptions.ConnectTimeout: continue
+        except: continue
         completion_percentage = (float(i + 1 - start_document) / float((end_document + 1) - start_document)) * 100.0
         print(f"[{completion_percentage :.2f}%] Checking remote document: {url} -> Code: {result.status_code}", end="\r")
 
         if result.status_code == 200:
+            missing_documents = 0
             valid_document_urls.append(url)
             total_size_b += int(result.headers["content-length"])
+        else: missing_documents += 1
+
+        if missing_documents >= 100: break
     
     #calculate size
     if total_size_b / (1024 ** 2) < 1024: 
@@ -54,7 +59,8 @@ def main(args: list[str]) -> int:
     updated_documents = 0
     skipped_documents = 0
     for document_url in valid_document_urls:
-        document = requests.get(document_url)
+        try: document = requests.get(document_url)
+        except: continue
         download_size += int(document.headers["content-length"])
         completion_percentage = (float(download_size) / float(total_size_b)) * 100.0
 
