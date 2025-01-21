@@ -1,4 +1,4 @@
-import os, sys, requests, pypdf, pymongo, gridfs
+import os, sys, re, time, hashlib, requests, tempfile, pypdf
 
 def getDocumentUrl(document_id: int) -> str:
     return f"https://dserver.bundestag.de/btd/{str(document_id)[0:2]}/{str(document_id)[2:5]}/{str(document_id)}.pdf"
@@ -7,30 +7,89 @@ def main(args: list[str]) -> int:
     if len(args) != 3:
         print(f"Usage: python3 {__file__} [start document] [end document]")
         return 0
+    
+    if os.path.isdir("btd"):
+        existant_documents = os.listdir("btd/")
+    else: existant_documents = []
 
+    start_time = time.time()
     start_document = int(args[1])
     end_document = int(args[2])
     valid_document_urls = []
+    existant_documents_hashes = {}
+    total_size_b = 0
 
-    #check documents for existance and size
+    #calculate hashes of existing documents
+    print("Generating hash-lookup...", end="")
+    for existant_document in existant_documents:
+        with open(f"btd/{existant_document}", "rb") as existant_document_handle:
+            existant_document_hash = hashlib.sha256(existant_document_handle.read(), usedforsecurity=False)
+            existant_documents_hashes[existant_document] = existant_document_hash.hexdigest()
+    print("Done.")
+
+    #check documents for existance on remote location
     for i in range(start_document, end_document + 1):
         url = getDocumentUrl(i)
-        result = requests.head(url)
-        print(f"Analyzing document: {url} -> Code: {result.status_code}")
+        try: result = requests.head(url)
+        except requests.exceptions.ConnectTimeout: continue
+        completion_percentage = (float(i + 1 - start_document) / float((end_document + 1) - start_document)) * 100.0
+        print(f"[{completion_percentage :.2f}%] Checking remote document: {url} -> Code: {result.status_code}", end="\r")
 
         if result.status_code == 200:
-            valid_document_urls.append((url, int(result.headers["content-length"])))
+            valid_document_urls.append(url)
+            total_size_b += int(result.headers["content-length"])
     
     #calculate size
-    total_size_b = 0
-    for url in valid_document_urls: total_size_b += url[1]
+    if total_size_b / (1024 ** 2) < 1024: 
+        print(f"\nCalculated size of download: {float(total_size_b) / (1024.0 ** 2) :.2f} MiB")
+    else:
+        print(f"\nCalculated size of download: {float(total_size_b) / (1024.0 ** 3) :.2f} GiB")
 
-    if total_size_b / (1024 ** 2) < 1000: 
-        print(f"Calculated size of download: {float(total_size_b) / (1024.0 ** 2) :.2f} MiB")
-    else: print(f"Calculated size of download: {float(total_size_b) / (1024.0 ** 3) :.2f} GiB")
+    #download documents
+    try: os.mkdir("btd")
+    except: pass
 
-    #
+    download_size = 0
+    new_documents = 0
+    updated_documents = 0
+    skipped_documents = 0
+    for document_url in valid_document_urls:
+        document = requests.get(document_url)
+        download_size += int(document.headers["content-length"])
+        completion_percentage = (float(download_size) / float(total_size_b)) * 100.0
 
+        temp_document_file = tempfile.TemporaryFile('wb+')
+        temp_document_file.write(document.content)
+
+        pdf = pypdf.PdfReader(temp_document_file)
+        document_digested_title = re.search(r"Drucksache\s[0-9]+/[0-9]+", pdf.metadata.title).group(0)
+        document_filename = document_digested_title.replace("/", "-").replace(" ", "_") + ".pdf"
+        temp_document_file.close()
+
+        document_updated = True
+        hash_newfile = hashlib.sha256(document.content).hexdigest()
+        for existant_document in existant_documents:
+            hash_oldfile = existant_documents_hashes[existant_document]
+            if hash_oldfile == hash_newfile:
+                document_updated = False
+                break
+        
+        if document_updated:
+            #put/overwrite document
+            if os.path.exists(f"btd/{document_filename}"): updated_documents += 1
+            else: new_documents += 1
+
+            with open(f"btd/{document_filename}", 'wb+') as document_file:
+                document_file.write(document.content)
+                document_file.close()
+
+            print(f"[{completion_percentage :.2f}%] Downloaded document: {document_digested_title}", end="\r")
+        else:
+            skipped_documents += 1
+            print(f"[{completion_percentage :.2f}%] Skipped document: {document_digested_title}", end="\r")
+
+    print(f"\nProgram finished in {time.time() - start_time :.1f} seconds.")
+    print(f"{new_documents} Documents new; {updated_documents} Documents updated; {skipped_documents} Documents skipped")
     return 0
 
 if __name__ == "__main__":
