@@ -1,7 +1,8 @@
 import os, sys, time, hashlib, requests
 
 def getDocumentUrl(document_id: int) -> str:
-    return f"https://dserver.bundestag.de/btd/{str(document_id)[0:2]}/{str(document_id)[2:5]}/{str(document_id)}.pdf"
+    document_id_s = str(document_id).zfill(7)
+    return f"https://dserver.bundestag.de/btd/{str(document_id_s)[0:2]}/{str(document_id_s)[2:5]}/{str(document_id_s)}.pdf"
 
 def main(args: list[str]) -> int:
     if len(args) != 3:
