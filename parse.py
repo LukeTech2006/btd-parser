@@ -1,6 +1,6 @@
 import os, sys, time, json, pypdf
 
-def main(args: list[str]) -> int:
+def main(args: list) -> int:
     start_time = time.time()
 
     if not os.path.isdir("btd"):
