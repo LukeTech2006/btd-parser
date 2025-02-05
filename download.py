@@ -45,7 +45,6 @@ def main(args: list) -> int:
     missing_documents = 0
     for i in range(start_document, end_document + 1):
         url = getDocumentUrl(i)
-        print(i, url)
         try: result = requests.head(url, verify=debug_verify_switch)
         except Exception as e:
             logger.error(e)
@@ -57,7 +56,6 @@ def main(args: list) -> int:
             missing_documents = 0
             valid_document_urls.append(url)
             total_size_b += int(result.headers["content-length"])
-            print(total_size_b)
         else: missing_documents += 1
 
         if missing_documents >= 100: break
