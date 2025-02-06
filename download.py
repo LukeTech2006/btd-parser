@@ -85,8 +85,7 @@ def main(args: list) -> int:
         sleep_time_seconds = sleep_time_minutes * 60
         end_sleep_time = time.time() + sleep_time_seconds
         logger.warning(f"[{time.strftime('%F %T', time.localtime())}] Rate limited! Download will resume at {time.strftime('%T', time.localtime(end_sleep_time))}")
-        while time.time() < end_sleep_time:
-            time.sleep(0.5)
+        time.sleep(sleep_time_seconds)
 
     download_size = 0
     new_documents = 0
