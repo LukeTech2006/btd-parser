@@ -21,6 +21,7 @@ def main(args: list) -> int:
         level=logging.INFO
     )
     logger = logging.getLogger()
+    logger.info(f"[{time.strftime('%F %T', time.localtime())}] Started btd-parser download module")
 
     if os.path.isdir("btd"):
         existant_documents = os.listdir("btd/")
@@ -35,19 +36,23 @@ def main(args: list) -> int:
     total_size_b = 0
 
     #calculate hashes of existing documents
-    logger.info(f"[{time.strftime('%F %T', time.localtime())}] Generating hash-lookup...")
+    logger.info(f"[{time.strftime('%F %T', time.localtime())}] Generating hash-lookup for {len(existant_documents)} document(s)")
     for existant_document in existant_documents:
+        if not existant_document.endswith(".pdf"):
+            logger.warning(f"[{time.strftime('%F %T', time.localtime())}] '{existant_document}' is not a valid document! Skipping")
+            continue
         with open(f"btd/{existant_document}", "rb") as existant_document_handle:
             existant_document_hash = hashlib.sha256(existant_document_handle.read())
             existant_documents_hashes[existant_document] = existant_document_hash.hexdigest()
 
     #check documents for existance on remote location
+    rate_limit = False
     missing_documents = 0
     for i in range(start_document, end_document + 1):
         url = getDocumentUrl(i)
         try: result = requests.head(url, verify=debug_verify_switch)
         except Exception as e:
-            logger.error(e)
+            logger.warning(f"[{time.strftime('%F %T', time.localtime())}] Skipping document at {url}: {e}")
             continue
         completion_percentage = (float(i + 1 - start_document) / float((end_document + 1) - start_document)) * 100.0
         logger.info(f"[{time.strftime('%F %T', time.localtime())}] {completion_percentage :.2f}% - Checking remote document: {url} -> Code: {result.status_code}")
@@ -56,9 +61,13 @@ def main(args: list) -> int:
             missing_documents = 0
             valid_document_urls.append(url)
             total_size_b += int(result.headers["content-length"])
+
+        elif result.status_code == 403:
+            rate_limit = True
+            
         else: missing_documents += 1
 
-        if missing_documents >= 100: break
+        if missing_documents >= 33: break
 
     #calculate size
     if total_size_b / (1024 ** 2) < 1024: 
@@ -70,6 +79,15 @@ def main(args: list) -> int:
     try: os.mkdir("btd")
     except: pass
 
+    #wait for server rate limit, if applicable (approx. 5 Minutes)
+    if rate_limit:
+        sleep_time_minutes = 8
+        sleep_time_seconds = sleep_time_minutes * 60
+        end_sleep_time = time.time() + sleep_time_seconds
+        logger.warning(f"[{time.strftime('%F %T', time.localtime())}] Rate limited! Download will resume at {time.strftime('%T', time.localtime(end_sleep_time))}")
+        while time.time() < end_sleep_time:
+            time.sleep(0.5)
+
     download_size = 0
     new_documents = 0
     updated_documents = 0
@@ -77,7 +95,7 @@ def main(args: list) -> int:
     for document_url in valid_document_urls:
         try: document = requests.get(document_url, verify=debug_verify_switch)
         except Exception as e:
-            logger.error(e)
+            logger.warning(f"[{time.strftime('%F %T', time.localtime())}] Skipping document at {url}: {e}")
             continue
         download_size += int(document.headers["content-length"])
         completion_percentage = (float(download_size) / float(total_size_b)) * 100.0
