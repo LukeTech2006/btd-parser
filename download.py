@@ -26,6 +26,9 @@ def main(args: list) -> int:
     if os.path.isdir("btd"):
         existant_documents = os.listdir("btd/")
     else: existant_documents = []
+    
+    for existant_document in existant_documents:
+        if not existant_document.endswith("*.pdf"): existant_documents.remove(existant_document)
 
     existant_documents_hashes = {}
     valid_document_urls = []
