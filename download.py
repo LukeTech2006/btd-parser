@@ -6,7 +6,7 @@ def getDocumentUrl(document_id: int) -> str:
 
 def main(args: list) -> int:
     #DEBUG ONLY!
-    debug_verify_switch = True
+    debug_verify_switch = False
 
     if len(args) != 3:
         logger.info(f"Usage: python3 {__file__} [start document] [end document]")
