@@ -4,9 +4,9 @@ def getDocumentUrl(document_id: int) -> str:
     document_id_s = str(document_id).zfill(7)
     return f"https://dserver.bundestag.de/btd/{str(document_id_s)[0:2]}/{str(document_id_s)[2:5]}/{str(document_id_s)}.pdf"
 
-def main(args: list) -> int:
+def main(args: list, debug_verify = False, logger = None) -> int:
     #DEBUG ONLY!
-    debug_verify_switch = True
+    debug_verify_switch = not debug_verify
 
     if len(args) != 3:
         logger.info(f"Usage: python3 {__file__} [start document] [end document]")
@@ -20,7 +20,7 @@ def main(args: list) -> int:
         format=f"[%(levelname)s]%(message)s",
         level=logging.INFO
     )
-    logger = logging.getLogger()
+    if logger == None: logger = logging.getLogger()
     logger.info(f"[{time.strftime('%F %T', time.localtime())}] Started btd-parser download module")
 
     if os.path.isdir("btd"):

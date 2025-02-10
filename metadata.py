@@ -1,10 +1,20 @@
-import os, sys, time, json, pypdf
+import os, sys, time, json, pypdf, logging
 
-def main(args: list) -> int:
+def main(args = [], logger = None) -> int:
     start_time = time.time()
 
+    try: os.mkdir("logs")
+    except: pass
+
+    logging.basicConfig(
+        filename=f"logs/{time.strftime('%F_%T', time.localtime()).replace(':', '-')}.log",
+        format=f"[%(levelname)s]%(message)s",
+        level=logging.INFO
+    )
+    if logger == None: logger = logging.getLogger()
+
     if not os.path.isdir("btd"):
-        print(f"[{time.strftime('%F %T')}] No Documents to parse")
+        logger.info(f"[{time.strftime('%F %T')}] No Documents to parse")
         return 0
     
     existant_documents = []
@@ -16,12 +26,12 @@ def main(args: list) -> int:
     existant_documents.sort()
     total_document_count = len(existant_documents)
 
-    print(f"[{time.strftime('%F %T')}] Working through input directory...")
+    logger.info(f"[{time.strftime('%F %T')}] Working through input directory...")
 
     current_document_index = 1
     for document_path in existant_documents:
         completion_percentage = (float(current_document_index) / float(total_document_count)) * 100.0
-        print(f"[{time.strftime('%F %T')}] {completion_percentage :.2f}% - Reading document: {document_path}")
+        logger.info(f"[{time.strftime('%F %T')}] {completion_percentage :.2f}% - Reading document: {document_path}")
         
         with open(f"btd/{document_path}", "rb") as document_handle:
             document_reader = pypdf.PdfReader(document_handle)
@@ -33,7 +43,7 @@ def main(args: list) -> int:
         json.dump(documents_metadata, metadata_handle, indent=4)
         metadata_handle.close()
 
-    print(f"[{time.strftime('%F %T')}] Program finished in {time.time() - start_time :.1f} seconds.")
+    logger.info(f"[{time.strftime('%F %T')}] Program finished in {time.time() - start_time :.1f} seconds.")
     return 0
 
 if __name__ == "__main__":
