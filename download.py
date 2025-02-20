@@ -108,6 +108,9 @@ def main(args: list, debug_verify = False, logger = None) -> int:
         document_updated = True
         hash_newfile = hashlib.sha256(document.content).hexdigest()
         for existant_document in existant_documents:
+            if not existant_document.endswith(".pdf"):
+                logger.warning(f"[{time.strftime('%F %T', time.localtime())}] '{existant_document}' is not a valid document! Skipping")
+                continue
             hash_oldfile = existant_documents_hashes[existant_document]
             if hash_oldfile == hash_newfile:
                 document_updated = False
