@@ -4,7 +4,7 @@ def getDocumentUrl(document_id: int) -> str:
     document_id_s = str(document_id).zfill(7)
     return f"https://dserver.bundestag.de/btd/{str(document_id_s)[0:2]}/{str(document_id_s)[2:5]}/{str(document_id_s)}.pdf"
 
-def main(args: list, debug_verify = False, logger = None) -> int:
+def main(args: list, debug_verify = False, logger = None, precomp_hashes = None) -> int:
     #DEBUG ONLY!
     debug_verify_switch = not debug_verify
 
@@ -28,7 +28,7 @@ def main(args: list, debug_verify = False, logger = None) -> int:
     else: existant_documents = []
     
     for existant_document in existant_documents:
-        if not existant_document.endswith("*.pdf"): existant_documents.remove(existant_document)
+        if not existant_document.endswith(".pdf"): existant_documents.remove(existant_document)
 
     existant_documents_hashes = {}
     valid_document_urls = []
@@ -39,14 +39,18 @@ def main(args: list, debug_verify = False, logger = None) -> int:
     total_size_b = 0
 
     #calculate hashes of existing documents
-    logger.info(f"[{time.strftime('%F %T', time.localtime())}] Generating hash-lookup for {len(existant_documents)} document(s)")
-    for existant_document in existant_documents:
-        if not existant_document.endswith(".pdf"):
-            logger.warning(f"[{time.strftime('%F %T', time.localtime())}] '{existant_document}' is not a valid document! Skipping")
-            continue
-        with open(f"btd/{existant_document}", "rb") as existant_document_handle:
-            existant_document_hash = hashlib.sha256(existant_document_handle.read())
-            existant_documents_hashes[existant_document] = existant_document_hash.hexdigest()
+    if precomp_hashes == None:
+        logger.info(f"[{time.strftime('%F %T', time.localtime())}] Generating hash-lookup for {len(existant_documents)} document(s)")
+        for existant_document in existant_documents:
+            if not existant_document.endswith(".pdf"):
+                logger.warning(f"[{time.strftime('%F %T', time.localtime())}] '{existant_document}' is not a valid document! Skipping")
+                continue
+            with open(f"btd/{existant_document}", "rb") as existant_document_handle:
+                existant_document_hash = hashlib.sha256(existant_document_handle.read())
+                existant_documents_hashes[existant_document] = existant_document_hash.hexdigest()
+    else:
+        for k, v in dict(precomp_hashes).items():
+            existant_documents_hashes[k] = v
 
     #check documents for existance on remote location
     rate_limit = False

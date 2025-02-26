@@ -1,4 +1,4 @@
-import os, sys, time, hash, metadata, logging, download
+import os, sys, time, hash, json, metadata, logging, download
 
 def main(args: list) -> int:
     try: os.mkdir("logs")
@@ -11,8 +11,13 @@ def main(args: list) -> int:
     )
     logger = logging.getLogger()
 
+    if os.path.isfile("btd/hash.json"):
+        logger.info("Found precomputed hashes")
+        with open("btd/hash.json", 'r') as precomp_hash_handle:
+            precomp_hashes = json.load(precomp_hash_handle)
+
     logger.info("Starting automated download")
-    exit_code_download = download.main(args, debug_verify=False, logger=logger)
+    exit_code_download = download.main(args, debug_verify=False, logger=logger, precomp_hashes=precomp_hashes or None)
 
     logger.info("Starting hash pre-computer")
     exit_code_hash = hash.main(logger=logger)
